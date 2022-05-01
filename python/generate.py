@@ -14,6 +14,34 @@ from size import Size
 from point import Point
 from file_wrappers import StdoutFileWrapper
 
+import random
+
+def gen_cities(prob_type):
+    assert prob_type in ["small", "medium", "large"], "prob_type must be small, medium, or large"
+
+    D_dict = {"small": 30, "medium": 50, "large": 100}
+    N_bounds_dict = {"small": (15, 25), "medium": (45, 55), "large": (195, 205)}
+    rp_dict = {"small": 8, "medium": 10, "large": 14}
+
+    N_upper, N_lower = N_bounds_dict[prob_type]
+    N = random.randint(N_upper, N_lower)
+    D = D_dict[prob_type]
+    rp = rp_dict[prob_type]
+
+    placed = set()
+    while len(placed) < N:
+        pos = (random.randint(0, D-1), random.randint(0, D-1))
+        placed.add(pos)
+    
+    assert len(placed) == N
+
+    cities = []
+    for pos in placed:
+        x, y = pos
+        cities.append(Point(x, y))
+    
+    return cities 
+
 
 def make_small_instance() -> Instance:
     """Creates a small problem instance.
@@ -25,6 +53,7 @@ def make_small_instance() -> Instance:
     """
     cities = []
     # YOUR CODE HERE
+    cities = gen_cities("small")
     return Size.SMALL.instance(cities)
 
 
@@ -38,6 +67,7 @@ def make_medium_instance() -> Instance:
     """
     cities = []
     # YOUR CODE HERE
+    cities = gen_cities("medium")
     return Size.MEDIUM.instance(cities)
 
 
@@ -51,6 +81,7 @@ def make_large_instance() -> Instance:
     """
     cities = []
     # YOUR CODE HERE
+    cities = gen_cities("large")
     return Size.LARGE.instance(cities)
 
 
