@@ -7,6 +7,7 @@ For usage, run `python3 solve.py --help`.
 
 import argparse
 from pathlib import Path
+from turtle import position
 from typing import Callable, Dict, List
 import random
 
@@ -16,8 +17,6 @@ from Individual import Individual
 from file_wrappers import StdinFileWrapper, StdoutFileWrapper
 from point import Point
 
-import heapq
-import math
 
 def solve_naive(instance: Instance) -> Solution:
     return Solution(
@@ -89,6 +88,22 @@ def utility_func(pos: Point, cities: dict, towers: list, coverage_radius: int, p
     # return num_cities_covered(pos, cities, coverage_radius) 
     return ncw*num_cities_covered(pos, cities, coverage_radius) - ntw*num_towers_conflicting(pos, towers, penalty_radius)
 
+
+def get_tower_bounding_box(pos: Point) -> List[Point]:
+    x, y = pos.x, pos.y
+
+    bb_ = [(x-3, y),(x-2, y),(x-1, y),(x+1, y),(x+2, y),(x+3, y), 
+    (x, y-3),(x, y-2),(x, y-1),(x, y+1),(x, y+2),(x, y+3),
+    (x-1, y+2), (x, y+2), (x+1, y+2),
+    (x-2, y+1), (x-1, y+1), (x, y+1), (x+1, y+1), (x+2, y+1),
+    (x-1, y-2), (x, y-2), (x+1, y-2),
+    (x-2, y-1), (x-1, y-1), (x, y-1), (x+1, y-1), (x+2, y-1)]
+    
+    bb = [Point(p[0], p[1]) for p in bb_]
+
+    return bb
+
+
 def solve_greedy(instance: Instance) -> Solution:
     cities = instance.cities
     grid_side_length = instance.grid_side_length
@@ -116,7 +131,9 @@ def solve_greedy(instance: Instance) -> Solution:
                 cities[city] = 1
 
         placed_towers.append(tower_to_place)
-        positions.remove(tower_to_place)        
+        positions.remove(tower_to_place)   
+        positions.difference_update(set(get_tower_bounding_box(tower_to_place)))
+
 
         # print(f"NUM CITIES COVERED: {sum(cities.values())}")
         # print(f"NUM TOWER PLACED: {len(placed_towers)}")
@@ -124,10 +141,6 @@ def solve_greedy(instance: Instance) -> Solution:
     sol = Solution(instance=instance, towers=placed_towers)
     print(f"PENALTY: {sol.penalty()}")
     return sol
-
-
-
-
 
 
 
