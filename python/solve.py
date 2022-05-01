@@ -7,13 +7,10 @@ For usage, run `python3 solve.py --help`.
 
 import argparse
 from pathlib import Path
-<<<<<<< HEAD
 from turtle import position
 from typing import Callable, Dict, List
-=======
 from turtle import pen
 from typing import Callable, Dict, List, final
->>>>>>> 3c25d7117fca4edbdcb2c5ac92a6c9b8b151c322
 import random
 
 from instance import Instance
@@ -115,7 +112,7 @@ def solve_greedy(instance: Instance) -> Solution:
     coverage_radius_sq = coverage_radius ** 2
     penalty_radius_sq = penalty_radius ** 2
 
-    num_trials = 10
+    num_trials = 5
 
     cities = [city for city in cities]
     placed_towers = []
@@ -152,8 +149,8 @@ def solve_greedy(instance: Instance) -> Solution:
         positions.remove(tower_to_place)
         positions.difference_update(set(get_tower_bounding_box(tower_to_place)))
 
-        print(f"NUM CITIES UNCOVERED: {len(cities)}")
-        print(f"NUM TOWER PLACED: {len(placed_towers)}")
+        # print(f"NUM CITIES UNCOVERED: {len(cities)}")
+        # print(f"NUM TOWER PLACED: {len(placed_towers)}")
 
     sol = Solution(instance=instance, towers=placed_towers)
     print(f"PENALTY: {sol.penalty()}")
@@ -167,8 +164,6 @@ def coverage(pos: Point, cities: List, coverage_radius: int) -> int:
             num_covered += 1
     return num_covered
 
-<<<<<<< HEAD
-=======
 def update_coverage(pos: Point, cities: List, coverage_radius: int) -> int:
     new_cities = []
     for city in cities:
@@ -274,7 +269,6 @@ def solve_greedy_opt(instance: Instance) -> Solution:
     return sol
 
     
->>>>>>> 3c25d7117fca4edbdcb2c5ac92a6c9b8b151c322
 SOLVERS: Dict[str, Callable[[Instance], Solution]] = {
     "naive": solve_naive,
     "greedy": solve_greedy,
