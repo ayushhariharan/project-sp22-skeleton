@@ -7,7 +7,7 @@ For usage, run `python3 solve.py --help`.
 
 import argparse
 from pathlib import Path
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 import random
 
 from instance import Instance
@@ -74,20 +74,20 @@ def solve_GA(instance: Instance) -> Solution:
 def num_cities_covered(pos: Point, cities: dict, coverage_radius: int) -> int:
     covered = 0
     for city in cities:
-        if cities[city] == 0 and math.sqrt(city.distance_sq(pos)) <= coverage_radius:
+        if cities[city] == 0 and city.distance_sq(pos) <= coverage_radius:
             covered += 1
     return covered
 
 def num_towers_conflicting(new_tower: Point, placed_towers: List[Point], penalty_radius: int) -> int:
     conflicts = 0
     for placed_tower in placed_towers:
-        if math.sqrt(new_tower.distance_sq(placed_tower)) <= penalty_radius:
+        if new_tower.distance_sq(placed_tower) <= penalty_radius:
             conflicts += 1
     return conflicts
 
-def utility_func(pos: Point, cities: dict, towers: list, coverage_radius: int, penalty_radius: int, ncw = 0.5, ntw = 0.5):
-    return num_cities_covered(pos, cities, coverage_radius) 
-    # return ncw*num_cities_covered(pos, cities, coverage_radius) - ntw*num_towers_conflicting(pos, towers, penalty_radius)
+def utility_func(pos: Point, cities: dict, towers: list, coverage_radius: int, penalty_radius: int, ncw = 2.5, ntw = 0.5):
+    # return num_cities_covered(pos, cities, coverage_radius) 
+    return ncw*num_cities_covered(pos, cities, coverage_radius) - ntw*num_towers_conflicting(pos, towers, penalty_radius)
 
 def solve_greedy(instance: Instance) -> Solution:
     cities = instance.cities
@@ -95,31 +95,36 @@ def solve_greedy(instance: Instance) -> Solution:
     coverage_radius = instance.coverage_radius
     penalty_radius = instance.penalty_radius
     num_cities = len(cities)
+    coverage_radius_sq = coverage_radius ** 2
+    penalty_radius_sq = penalty_radius ** 2
+
 
     cities = {city: 0 for city in cities}
     placed_towers = []
-    positions = [Point(x, y) for x in range(grid_side_length) for y in range(grid_side_length)]
+    positions = set([Point(x, y) for x in range(grid_side_length) for y in range(grid_side_length)
+                    if num_cities_covered(Point(x,y), cities, coverage_radius_sq) != 0])
+
+    utility = lambda pos: utility_func(pos, cities, placed_towers, coverage_radius_sq, penalty_radius_sq)
+
 
     while sum(cities.values()) < num_cities:
         
-        tower_to_place = positions[0]
+        tower_to_place = max(positions, key=lambda pos: utility(pos))
 
-        for pos in positions:
-            if utility_func(tower_to_place) < utility_func(pos):
-                tower_to_place = pos 
-            
         for city in cities:
-            if math.sqrt(city.distance_sq(tower_to_place)) <= coverage_radius:
+            if city.distance_sq(tower_to_place) <= coverage_radius_sq:
                 cities[city] = 1
 
         placed_towers.append(tower_to_place)
-        positions.remove(tower_to_place)
-         
-        print(f"NUM CITIES COVERED: {sum(cities.values())}")
-        print(f"NUM TOWER PLACED: {len(placed_towers)}")
+        positions.remove(tower_to_place)        
 
+        # print(f"NUM CITIES COVERED: {sum(cities.values())}")
+        # print(f"NUM TOWER PLACED: {len(placed_towers)}")
 
-    return Solution(instance=instance, towers=placed_towers)
+    sol = Solution(instance=instance, towers=placed_towers)
+    print(f"PENALTY: {sol.penalty()}")
+    return sol
+
 
 
 
