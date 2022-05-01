@@ -21,6 +21,9 @@ class Point:
     x: int
     y: int
 
+    # def __lt__(self, other):
+    #     return self.x < other.x 
+
     def distance_sq(self: Point, second: Point):
         """Returns the squared distance between two points.
 
