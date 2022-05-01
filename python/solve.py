@@ -7,12 +7,8 @@ For usage, run `python3 solve.py --help`.
 
 import argparse
 from pathlib import Path
-<<<<<<< HEAD
-from typing import Callable, Dict, List
-=======
 from typing import Callable, Dict
 import random
->>>>>>> 2714a500b66647c8a5a267539a49f40891e01194
 
 from instance import Instance
 from solution import Solution
@@ -102,18 +98,16 @@ def solve_greedy(instance: Instance) -> Solution:
 
     cities = {city: 0 for city in cities}
     placed_towers = []
-    positions = set([Point(x, y) for x in range(grid_side_length) for y in range(grid_side_length)])
+    positions = [Point(x, y) for x in range(grid_side_length) for y in range(grid_side_length)]
 
-    print(f"NUM CITIES: {num_cities}")
     while sum(cities.values()) < num_cities:
-        heap = []
-    
+        
+        tower_to_place = positions[0]
+
         for pos in positions:
-            heapq.heappush(heap, (-utility_func(pos, cities, placed_towers, coverage_radius, penalty_radius, ncw=10, ntw=1),
-                                    id(pos), pos))
-
-        _, __, tower_to_place = heapq.heappop(heap)
-
+            if utility_func(tower_to_place) < utility_func(pos):
+                tower_to_place = pos 
+            
         for city in cities:
             if math.sqrt(city.distance_sq(tower_to_place)) <= coverage_radius:
                 cities[city] = 1
@@ -123,7 +117,6 @@ def solve_greedy(instance: Instance) -> Solution:
          
         print(f"NUM CITIES COVERED: {sum(cities.values())}")
         print(f"NUM TOWER PLACED: {len(placed_towers)}")
-        print(f"HEAP FIRST ELEM: {heap[0]}")
 
 
     return Solution(instance=instance, towers=placed_towers)
