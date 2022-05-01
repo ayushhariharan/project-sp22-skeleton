@@ -7,10 +7,16 @@ For usage, run `python3 solve.py --help`.
 
 import argparse
 from pathlib import Path
+<<<<<<< HEAD
 from typing import Callable, Dict, List
+=======
+from typing import Callable, Dict
+import random
+>>>>>>> 2714a500b66647c8a5a267539a49f40891e01194
 
 from instance import Instance
 from solution import Solution
+from Individual import Individual
 from file_wrappers import StdinFileWrapper, StdoutFileWrapper
 from point import Point
 
@@ -22,6 +28,51 @@ def solve_naive(instance: Instance) -> Solution:
         instance=instance,
         towers=instance.cities,
     )
+
+def solve_GA(instance: Instance) -> Solution:
+    population_size = 100000
+    population = []
+
+    for _ in range(population_size):
+        ind = Individual.create_individual(instance)
+        population.append(ind)
+    
+    num_generations = 100
+    
+    while (num_generations > 0):
+        population = sorted(population, key=lambda x: x.fitness)
+        new_generation = []
+
+        for individual in population:
+            if individual.fitness == -1000:
+                population.remove(individual)
+        
+        s = int((10*len(population))/100)
+        new_generation.extend(population[:s])
+
+        s = int((90*len(population))/100)
+        for _ in range(s):
+            parent1 = random.choice(population[:50])
+            parent2 = random.choice(population[:50])
+            child = parent1.mate(parent2)
+            new_generation.append(child)
+        
+        population = new_generation
+
+        if (len(population)) < 10:
+            num_generations = 0
+            break
+
+        num_generations -= 1
+    
+    population = sorted(population, key = lambda x : x.fitness)
+    
+    best_individual = population[0]
+
+    print(f'Penalty: {best_individual.fitness}')
+
+    return best_individual.solution
+
 
 
 def num_cities_covered(pos: Point, cities: dict, coverage_radius: int) -> int:
@@ -41,7 +92,6 @@ def num_towers_conflicting(new_tower: Point, placed_towers: List[Point], penalty
 def utility_func(pos: Point, cities: dict, towers: list, coverage_radius: int, penalty_radius: int, ncw = 0.5, ntw = 0.5):
     return num_cities_covered(pos, cities, coverage_radius) 
     # return ncw*num_cities_covered(pos, cities, coverage_radius) - ntw*num_towers_conflicting(pos, towers, penalty_radius)
-
 
 def solve_greedy(instance: Instance) -> Solution:
     cities = instance.cities
@@ -85,7 +135,8 @@ def solve_greedy(instance: Instance) -> Solution:
 
 SOLVERS: Dict[str, Callable[[Instance], Solution]] = {
     "naive": solve_naive,
-    "greedy": solve_greedy
+    "greedy": solve_greedy,
+    "genetic" : solve_GA
 }
 
 
