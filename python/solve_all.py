@@ -58,6 +58,7 @@ def traverse_files(inroot: str, outroot):
 
 def solve_one(args):
     size, inf, outf = args
+    print(f"Working on solution {str(inf)}")
     try:
         with open(inf) as f:
             instance = Instance.parse(f.readlines())
