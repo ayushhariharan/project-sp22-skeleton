@@ -15,6 +15,7 @@ from solution import Solution
 from Individual import Individual
 from file_wrappers import StdinFileWrapper, StdoutFileWrapper
 
+import heapq
 
 def solve_naive(instance: Instance) -> Solution:
     return Solution(
@@ -66,8 +67,29 @@ def solve_GA(instance: Instance) -> Solution:
 
     return best_individual.solution
 
+def solve_greedy(instance: Instance) -> Solution:
+    cities = instance.cities
+    grid_side_length = instance.grid_side_length
+    coverage_radius = instance.coverage_radius
+    penalty_radius = instance.penalty_radius
+    num_cities = len(cities)
+
+
+
+    heap = []
+
+    temp_cities_covered = 0
+
+    return Solution(
+        instance=instance,
+        towers=instance.cities
+    )
+
+
+
 SOLVERS: Dict[str, Callable[[Instance], Solution]] = {
     "naive": solve_naive,
+    "greedy": solve_greedy,
     "genetic" : solve_GA
 }
 
