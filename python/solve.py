@@ -13,6 +13,7 @@ from instance import Instance
 from solution import Solution
 from file_wrappers import StdinFileWrapper, StdoutFileWrapper
 
+import heapq
 
 def solve_naive(instance: Instance) -> Solution:
     return Solution(
@@ -20,9 +21,31 @@ def solve_naive(instance: Instance) -> Solution:
         towers=instance.cities,
     )
 
+def solve_greedy(instance: Instance) -> Solution:
+    cities = instance.cities
+    grid_side_length = instance.grid_side_length
+    coverage_radius = instance.coverage_radius
+    penalty_radius = instance.penalty_radius
+    num_cities = len(cities)
+
+
+
+    heap = []
+
+    temp_cities_covered = 0
+
+    for i in range(len(grid_side_length)):
+        for j in range(len(grid_side_length)):
+
+
+
+
+
+
 
 SOLVERS: Dict[str, Callable[[Instance], Solution]] = {
     "naive": solve_naive
+    "greedy": solve_greedy
 }
 
 
