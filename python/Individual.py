@@ -1,7 +1,10 @@
+import collections
 import enum
 import random
 from solution import Solution
 from point import Point
+from instance import Instance
+import math
 
 class Individual(object):
     def __init__(self, solution, num_towers, problem) -> None:
@@ -26,6 +29,30 @@ class Individual(object):
 
         return Individual(solution=new_solution, num_towers=num_towers, problem=problem_instance)
 
+    def num_cities_covered(pos: Point, problem: Instance) -> int:
+        covered = 0
+        for city in problem.cities:
+            if math.sqrt(city.distance_sq(pos)) <= problem.coverage_radius:
+                covered += 1
+        return covered
+    
+    # def bestMate(self, individual_2):
+    #     towers = self.solution.towers
+    #     towers.extend(individual_2.solution.towers)
+
+    #     uncovered_cities = len(self.problem.cities)
+    #     coverage = {}
+    #     for pos in towers:
+    #         tower_coverage = Individual.num_cities_covered(pos, self.problem)
+    #         if (pos not in coverage):
+    #             coverage[pos] = tower_coverage
+
+    #     while (uncovered_cities > 0):
+    #         orderedCoverage = dict(sorted(coverage.items(), key=lambda x: x[1]))
+
+    #         tower_position = orderedCoverage.popitem()[0]
+    
+    
     def mate(self, individual_2):
         largest_tower = []
         smallest_tower = []
