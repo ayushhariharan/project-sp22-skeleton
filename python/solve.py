@@ -7,7 +7,8 @@ For usage, run `python3 solve.py --help`.
 
 import argparse
 from pathlib import Path
-from typing import Callable, Dict, List
+from turtle import pen
+from typing import Callable, Dict, List, final
 import random
 
 from instance import Instance
@@ -126,15 +127,123 @@ def solve_greedy(instance: Instance) -> Solution:
     return sol
 
 
+def coverage(pos: Point, cities: List, coverage_radius: int) -> int:
+    num_covered = 0
+    for city in cities:
+        if city.distance_sq(pos) <= (coverage_radius ** 2):
+            num_covered += 1
+    return num_covered
+
+def update_coverage(pos: Point, cities: List, coverage_radius: int) -> int:
+    new_cities = []
+    for city in cities:
+        if city.distance_sq(pos) <= (coverage_radius ** 2):
+            continue
+        new_cities.append(city)
+    return new_cities
+
+def penalty_heuristic(new_tower: Point, placed_towers: List[Point], penalty_radius: int) -> int:
+    num_conflicts = 0
+    for placed_tower in placed_towers:
+        if new_tower.distance_sq(placed_tower) <= (penalty_radius ** 2):
+            num_conflicts += 1
+    return num_conflicts
+
+def greedy_utility(pos: Point, uncovered_cities: List[Point], placed_towers: List[Point], coverage_radius: int, penalty_radius: int) -> int:
+    ncw = 2.5
+    ntw = 0.5
+
+    city_coverage = coverage(pos, uncovered_cities, coverage_radius)
+    tower_penalties = penalty_heuristic(pos, placed_towers, penalty_radius)
+
+    return (ncw * city_coverage) - (ntw * tower_penalties)
+
+def in_bounds(pos: Point, grid_boundry: int) -> bool:
+    if (pos.x < 0 or pos.y < 0):
+        return False 
+    if (pos.x >= grid_boundry or pos.y >= grid_boundry):
+        return False 
+    return True
+
+def prune_search(placed_tower, other_towers, positions, penalty_radius, grid_boundary):
+    penalty_bound = 2 * penalty_radius
+
+    search_space = set()
+    for bound_x in range(placed_tower.x - penalty_bound, placed_tower.x + penalty_bound + 1):
+        upper_SP = Point(bound_x, placed_tower.y + penalty_bound)
+        upper_conflicts = penalty_heuristic(upper_SP, other_towers, penalty_radius)
+        lower_SP = Point(bound_x, placed_tower.y - penalty_bound)
+        lower_conflicts = penalty_heuristic(upper_SP, other_towers, penalty_radius)
+
+        if (in_bounds(upper_SP, grid_boundary) and (upper_SP in positions) and upper_conflicts == 0):
+            search_space.add(upper_SP)
+            # positions.remove(upper_SP)
+        
+        if (in_bounds(lower_SP, grid_boundary) and (lower_SP in positions) and lower_conflicts == 0):
+            search_space.add(lower_SP)
+            # positions.remove(lower_SP)
+    
+    for bound_y in range(placed_tower.y - penalty_bound, placed_tower.y + penalty_bound + 1):
+        upper_SP = Point(placed_tower.x + penalty_bound, bound_y)
+        upper_conflicts = penalty_heuristic(upper_SP, other_towers, penalty_radius)
+        lower_SP = Point(placed_tower.x - penalty_bound, bound_y)
+        lower_conflicts = penalty_heuristic(upper_SP, other_towers, penalty_radius)
 
 
+        if (in_bounds(upper_SP, grid_boundary) and (upper_SP in positions) and upper_conflicts == 0):
+            search_space.add(upper_SP)
+            # positions.remove(upper_SP)
+        
+        if (in_bounds(lower_SP, grid_boundary) and (lower_SP in positions) and lower_conflicts == 0):
+            search_space.add(lower_SP)
+            # positions.remove(lower_SP)
+    
+    return search_space
 
+def search(placed_towers, positions, penalty_radius, grid_boundary):
+    final_search = set()
+    for tower in placed_towers:
+        our_search = prune_search(tower, placed_towers, positions, penalty_radius, grid_boundary)
+        final_search = final_search.union(our_search)
+    return final_search
 
+def solve_greedy_opt(instance: Instance) -> Solution:
+    placed_towers = []
+    uncovered_cities = instance.cities
+    positions = set([Point(x, y) for x in range(instance.grid_side_length) for y in range (instance.grid_side_length) 
+        if coverage(Point(x, y), uncovered_cities, instance.coverage_radius) != 0])
+    utility = lambda pos: greedy_utility(pos, uncovered_cities, placed_towers, instance.coverage_radius, instance.penalty_radius)    
+    
+    tower_to_place = max(positions, key = lambda pos : utility(pos))
+    placed_towers.append(tower_to_place)
+    search_space = search(placed_towers, positions, instance.penalty_radius, instance.grid_side_length)
+    uncovered_cities = update_coverage(tower_to_place, uncovered_cities, instance.coverage_radius)
 
+    while len(uncovered_cities) > 0:
+        if len(search_space) == 0:
+            tower_to_place = max(positions, key = lambda pos : utility(pos))
+        else:
+            tower_to_place = max(search_space, key = lambda pos : utility(pos))
+
+        positions.remove(tower_to_place)
+        placed_towers.append(tower_to_place)
+        search_space = search(placed_towers, positions, instance.penalty_radius, instance.grid_side_length)
+        uncovered_cities = update_coverage(tower_to_place, uncovered_cities, instance.coverage_radius)
+
+        print(f'Positions Length : {len(positions)}')
+        print(f'Search Space : {len(search_space)}')
+
+    sol = Solution(instance=instance, towers=placed_towers)
+    print(f"PENALTY: {sol.penalty()}")
+
+    return sol
+
+    
 SOLVERS: Dict[str, Callable[[Instance], Solution]] = {
     "naive": solve_naive,
     "greedy": solve_greedy,
-    "genetic" : solve_GA
+    "genetic" : solve_GA,
+    "greedy_opt" : solve_greedy_opt
 }
 
 
