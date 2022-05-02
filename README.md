@@ -8,6 +8,14 @@ versions 3.6+.
 
 ## Usage
 
+**Running the code is simple. Just enter the command 
+
+```
+python3 python/solve_all.py inputs outputs
+```
+
+This will automatically run the randomized greedy with heuristic algorithm that we coded in solve.py.**
+
 ### Generating instances
 
 To generate instances, read through [`python/instance.py`](python/instance.py),
