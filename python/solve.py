@@ -10,7 +10,6 @@ from pathlib import Path
 from turtle import position
 from typing import Callable, Dict, List
 from turtle import pen
-from typing import Callable, Dict, List, final
 import random
 
 from instance import Instance
@@ -26,94 +25,6 @@ def solve_naive(instance: Instance) -> Solution:
         towers=instance.cities,
     )
 
-
-
-def num_cities_covered(pos: Point, cities: dict, coverage_radius: int) -> int:
-    covered = 0
-    for city in cities:
-        if city.distance_sq(pos) <= coverage_radius:
-            covered += 1
-    return covered
-
-def num_towers_conflicting(new_tower: Point, placed_towers: List[Point], penalty_radius: int) -> int:
-    conflicts = 0
-    for placed_tower in placed_towers:
-        if new_tower.distance_sq(placed_tower) <= penalty_radius:
-            conflicts += 1
-    return conflicts
-
-def utility_func(pos: Point, cities: dict, towers: list, coverage_radius: int, penalty_radius: int, ncw = 2.5, ntw = 0.5):
-    # return num_cities_covered(pos, cities, coverage_radius)
-    return ncw*num_cities_covered(pos, cities, coverage_radius) - ntw*num_towers_conflicting(pos, towers, penalty_radius)
-
-def get_tower_bounding_box(pos: Point) -> List[Point]:
-    x, y = pos.x, pos.y
-
-    bb_ = [(x-3, y),(x-2, y),(x-1, y),(x+1, y),(x+2, y),(x+3, y),
-    (x, y-3),(x, y-2),(x, y-1),(x, y+1),(x, y+2),(x, y+3),
-    (x-1, y+2), (x, y+2), (x+1, y+2),
-    (x-2, y+1), (x-1, y+1), (x, y+1), (x+1, y+1), (x+2, y+1),
-    (x-1, y-2), (x, y-2), (x+1, y-2),
-    (x-2, y-1), (x-1, y-1), (x, y-1), (x+1, y-1), (x+2, y-1)]
-    bb = [Point(p[0], p[1]) for p in bb_]
-
-    return bb
-
-def solve_greedy(instance: Instance) -> Solution:
-    cities = instance.cities
-    grid_side_length = instance.grid_side_length
-    coverage_radius = instance.coverage_radius
-    penalty_radius = instance.penalty_radius
-    N = len(cities)
-    coverage_radius_sq = coverage_radius ** 2
-    penalty_radius_sq = penalty_radius ** 2
-
-    num_trials = 3
-
-    cities = [city for city in cities]
-    placed_towers = []
-    positions = set([Point(x, y) for x in range(grid_side_length) for y in range(grid_side_length)
-                    if num_cities_covered(Point(x,y), cities, coverage_radius_sq) != 0])
-
-    utility = lambda pos: utility_func(pos, cities, placed_towers, coverage_radius_sq, penalty_radius_sq, ncw = 2.5, ntw = 0.5)
-    utility_early_stopping = lambda pos: utility_func(pos, cities, placed_towers, coverage_radius_sq, penalty_radius_sq, ncw = 1, ntw = 0)
-
-    flag = False
-
-    while len(cities) > 0:
-
-        search_nums = [int((1 - (0.8*len(cities)/N)) * len(positions)) for _ in range(num_trials)]
-
-        search_positions = [random.sample(positions, search_nums[i]) for i in range(num_trials)]
-
-        if len(placed_towers) >= 0.90 * N or flag:
-            max_towers = [max(search_positions[i], key = lambda pos: utility_early_stopping(pos)) for i in range(num_trials)]
-            tower_to_place = max(max_towers, key = lambda pos: utility_early_stopping(pos))
-        else:
-            max_towers = [max(search_positions[i], key = lambda pos: utility(pos)) for i in range(num_trials)]
-            tower_to_place = max(max_towers, key = lambda pos: utility(pos))
-
-        original_cities_length = len(cities)
-        temp_cities = list(filter(lambda city: city.distance_sq(tower_to_place) > coverage_radius_sq, cities))
-        new_cities_length = len(temp_cities)
-        if original_cities_length == new_cities_length:
-            flag = True
-            continue
-
-        cities = temp_cities
-        placed_towers.append(tower_to_place)
-        positions.remove(tower_to_place)
-        positions.difference_update(set(get_tower_bounding_box(tower_to_place)))
-
-        # print(f"NUM CITIES UNCOVERED: {len(cities)}")
-        # print(f"NUM TOWER PLACED: {len(placed_towers)}")
-
-    sol = Solution(instance=instance, towers=placed_towers)
-    print(f"PENALTY: {sol.penalty()}")
-    return sol
-
-
-#############################################################
 def solve_GA(instance: Instance) -> Solution:
     population_size = 100000
     population = []
@@ -159,6 +70,92 @@ def solve_GA(instance: Instance) -> Solution:
     return best_individual.solution
 
 
+
+def num_cities_covered(pos: Point, cities: dict, coverage_radius: int) -> int:
+    covered = 0
+    for city in cities:
+        if city.distance_sq(pos) <= coverage_radius:
+            covered += 1
+    return covered
+
+def num_towers_conflicting(new_tower: Point, placed_towers: List[Point], penalty_radius: int) -> int:
+    conflicts = 0
+    for placed_tower in placed_towers:
+        if new_tower.distance_sq(placed_tower) <= penalty_radius:
+            conflicts += 1
+    return conflicts
+
+def utility_func(pos: Point, cities: dict, towers: list, coverage_radius: int, penalty_radius: int, ncw = 2.5, ntw = 0.5):
+    # return num_cities_covered(pos, cities, coverage_radius)
+    return ncw*num_cities_covered(pos, cities, coverage_radius) - ntw*num_towers_conflicting(pos, towers, penalty_radius)
+
+def get_tower_bounding_box(pos: Point) -> List[Point]:
+    x, y = pos.x, pos.y
+
+    bb_ = [(x-3, y),(x-2, y),(x-1, y),(x+1, y),(x+2, y),(x+3, y),
+    (x, y-3),(x, y-2),(x, y-1),(x, y+1),(x, y+2),(x, y+3),
+    (x-1, y+2), (x, y+2), (x+1, y+2),
+    (x-2, y+1), (x-1, y+1), (x, y+1), (x+1, y+1), (x+2, y+1),
+    (x-1, y-2), (x, y-2), (x+1, y-2),
+    (x-2, y-1), (x-1, y-1), (x, y-1), (x+1, y-1), (x+2, y-1)]
+    bb = [Point(p[0], p[1]) for p in bb_]
+
+    return bb
+
+def solve_greedy(instance: Instance) -> Solution:
+    cities = instance.cities
+    grid_side_length = instance.grid_side_length
+    coverage_radius = instance.coverage_radius
+    penalty_radius = instance.penalty_radius
+    N = len(cities)
+    coverage_radius_sq = coverage_radius ** 2
+    penalty_radius_sq = penalty_radius ** 2
+
+    num_trials = 5
+
+    cities = [city for city in cities]
+    placed_towers = []
+    positions = set([Point(x, y) for x in range(grid_side_length) for y in range(grid_side_length)
+                    if num_cities_covered(Point(x,y), cities, coverage_radius_sq) != 0])
+
+    utility = lambda pos: utility_func(pos, cities, placed_towers, coverage_radius_sq, penalty_radius_sq, ncw = 2.5, ntw = 0.5)
+    utility_early_stopping = lambda pos: utility_func(pos, cities, placed_towers, coverage_radius_sq, penalty_radius_sq, ncw = 1, ntw = 0)
+
+    flag = False
+
+    while len(cities) > 0:
+
+        search_nums = [int((1 - (0.45*len(cities)/N)) * len(positions)) for _ in range(num_trials)]
+
+        search_positions = [random.sample(positions, search_nums[i]) for i in range(num_trials)]
+
+        if len(placed_towers) >= 0.90 * N or flag:
+            max_towers = [max(search_positions[i], key = lambda pos: utility_early_stopping(pos)) for i in range(num_trials)]
+            tower_to_place = max(max_towers, key = lambda pos: utility_early_stopping(pos))
+        else:
+            max_towers = [max(search_positions[i], key = lambda pos: utility(pos)) for i in range(num_trials)]
+            tower_to_place = max(max_towers, key = lambda pos: utility(pos))
+
+        original_cities_length = len(cities)
+        temp_cities = list(filter(lambda city: city.distance_sq(tower_to_place) > coverage_radius_sq, cities))
+        new_cities_length = len(temp_cities)
+        if original_cities_length == new_cities_length:
+            flag = True
+            continue
+
+        cities = temp_cities
+        placed_towers.append(tower_to_place)
+        positions.remove(tower_to_place)
+        positions.difference_update(set(get_tower_bounding_box(tower_to_place)))
+
+        # print(f"NUM CITIES UNCOVERED: {len(cities)}")
+        # print(f"NUM TOWER PLACED: {len(placed_towers)}")
+
+    sol = Solution(instance=instance, towers=placed_towers)
+    print(f"PENALTY: {sol.penalty()}")
+    return sol
+
+
 def coverage(pos: Point, cities: List, coverage_radius: int) -> int:
     num_covered = 0
     for city in cities:
@@ -192,9 +189,9 @@ def greedy_utility(pos: Point, uncovered_cities: List[Point], placed_towers: Lis
 
 def in_bounds(pos: Point, grid_boundry: int) -> bool:
     if (pos.x < 0 or pos.y < 0):
-        return False 
+        return False
     if (pos.x >= grid_boundry or pos.y >= grid_boundry):
-        return False 
+        return False
     return True
 
 def prune_search(placed_tower, other_towers, positions, penalty_radius, grid_boundary):
@@ -210,11 +207,11 @@ def prune_search(placed_tower, other_towers, positions, penalty_radius, grid_bou
         if (in_bounds(upper_SP, grid_boundary) and (upper_SP in positions) and upper_conflicts == 0):
             search_space.add(upper_SP)
             # positions.remove(upper_SP)
-        
+
         if (in_bounds(lower_SP, grid_boundary) and (lower_SP in positions) and lower_conflicts == 0):
             search_space.add(lower_SP)
             # positions.remove(lower_SP)
-    
+
     for bound_y in range(placed_tower.y - penalty_bound, placed_tower.y + penalty_bound + 1):
         upper_SP = Point(placed_tower.x + penalty_bound, bound_y)
         upper_conflicts = penalty_heuristic(upper_SP, other_towers, penalty_radius)
@@ -225,11 +222,11 @@ def prune_search(placed_tower, other_towers, positions, penalty_radius, grid_bou
         if (in_bounds(upper_SP, grid_boundary) and (upper_SP in positions) and upper_conflicts == 0):
             search_space.add(upper_SP)
             # positions.remove(upper_SP)
-        
+
         if (in_bounds(lower_SP, grid_boundary) and (lower_SP in positions) and lower_conflicts == 0):
             search_space.add(lower_SP)
             # positions.remove(lower_SP)
-    
+
     return search_space
 
 def search(placed_towers, positions, penalty_radius, grid_boundary):
@@ -242,10 +239,10 @@ def search(placed_towers, positions, penalty_radius, grid_boundary):
 def solve_greedy_opt(instance: Instance) -> Solution:
     placed_towers = []
     uncovered_cities = instance.cities
-    positions = set([Point(x, y) for x in range(instance.grid_side_length) for y in range (instance.grid_side_length) 
+    positions = set([Point(x, y) for x in range(instance.grid_side_length) for y in range (instance.grid_side_length)
         if coverage(Point(x, y), uncovered_cities, instance.coverage_radius) != 0])
-    utility = lambda pos: greedy_utility(pos, uncovered_cities, placed_towers, instance.coverage_radius, instance.penalty_radius)    
-    
+    utility = lambda pos: greedy_utility(pos, uncovered_cities, placed_towers, instance.coverage_radius, instance.penalty_radius)
+
     tower_to_place = max(positions, key = lambda pos : utility(pos))
     placed_towers.append(tower_to_place)
     search_space = search(placed_towers, positions, instance.penalty_radius, instance.grid_side_length)
