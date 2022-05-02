@@ -126,7 +126,7 @@ def solve_greedy(instance: Instance) -> Solution:
 
     while len(cities) > 0:
 
-        search_nums = [int((1 - (0.75*len(cities)/N)) * len(positions)) for _ in range(num_trials)]
+        search_nums = [int((1 - (0.45*len(cities)/N)) * len(positions)) for _ in range(num_trials)]
 
         search_positions = [random.sample(positions, search_nums[i]) for i in range(num_trials)]
 
