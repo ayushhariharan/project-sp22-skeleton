@@ -10,7 +10,6 @@ from pathlib import Path
 from turtle import position
 from typing import Callable, Dict, List
 from turtle import pen
-from typing import Callable, Dict, List
 import random
 
 from instance import Instance
@@ -112,7 +111,7 @@ def solve_greedy(instance: Instance) -> Solution:
     coverage_radius_sq = coverage_radius ** 2
     penalty_radius_sq = penalty_radius ** 2
 
-    num_trials = 1
+    num_trials = 5
 
     cities = [city for city in cities]
     placed_towers = []
@@ -126,7 +125,7 @@ def solve_greedy(instance: Instance) -> Solution:
 
     while len(cities) > 0:
 
-        search_nums = [int((1 - (0.075*len(cities)/N)) * len(positions)) for _ in range(num_trials)]
+        search_nums = [int((1 - (0.45*len(cities)/N)) * len(positions)) for _ in range(num_trials)]
 
         search_positions = [random.sample(positions, search_nums[i]) for i in range(num_trials)]
 
@@ -268,7 +267,7 @@ def solve_greedy_opt(instance: Instance) -> Solution:
 
     return sol
 
-
+    
 SOLVERS: Dict[str, Callable[[Instance], Solution]] = {
     "naive": solve_naive,
     "greedy": solve_greedy,
